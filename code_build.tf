@@ -19,55 +19,32 @@ data "aws_iam_policy_document" "build_assume_role" {
   }
 }
 
-resource "aws_iam_policy" "codebuild_policy" {
-  name = "${var.project_name}-codebuild"
-  policy = "${data.aws_iam_policy_document.codebuild.json}"
+resource "aws_iam_role_policy_attachment" "codebuild_logstream" {
+  role       = "${aws_iam_role.codebuild.id}"
+  policy_arn = "${aws_iam_policy.logstream.arn}"
 }
 
-locals {
-  region_account = "${data.aws_region.default.name}:${data.aws_caller_identity.default.account_id}"
-  log_group_prefix = "arn:aws:logs:${local.region_account}:log-group:/aws/codebuild/${var.project_name}:log-stream"
+resource "aws_iam_policy" "logstream" {
+  name   = "${var.project_name}-logstream"
+  policy = "${data.aws_iam_policy_document.logstream.json}"
 }
 
-data "aws_iam_policy_document" "codebuild" {
+data "aws_iam_policy_document" "logstream" {
   statement {
     actions = [
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
-    resources = [
-      "${local.log_group_prefix}",
-      "${local.log_group_prefix}:*"
-    ]
-    effect = "Allow"
-  }
-
-  statement {
-    actions = [
-      "codecommit:GitPull"
-    ]
-
-    resources = [
-      "arn:aws:codecommit:${data.aws_region.default.name}:${data.aws_caller_identity.default.account_id}:${var.project_name}"
-    ]
+    resources = ["*"]
 
     effect = "Allow"
   }
+}
 
-  statement {
-    actions = [
-      "s3:PutObject",
-      "s3:GetObject",
-      "s3:GetObjectVersion"
-    ]
-
-    resources = [
-      "${aws_s3_bucket.build_artifacts.arn}"
-    ]
-
-    effect = "Allow"
-  }
+resource "aws_iam_role_policy_attachment" "s3_build" {
+  role       = "${aws_iam_role.codebuild.id}"
+  policy_arn = "${aws_iam_policy.s3.arn}"
 }
 
 resource "aws_iam_role_policy_attachment" "kms_codebuild" {

@@ -21,29 +21,24 @@ data "aws_iam_policy_document" "pipeline_assume_role" {
 
 resource "aws_iam_role_policy_attachment" "default" {
   role       = "${aws_iam_role.codepipeline.id}"
-  policy_arn = "${aws_iam_policy.codepipeline_policy.arn}"
+  policy_arn = "${aws_iam_policy.codepipeline_ec2.arn}"
 }
 
-resource "aws_iam_policy" "codepipeline_policy" {
-  name   = "${var.project_name}-codepipeline"
-  policy = "${data.aws_iam_policy_document.codepipeline.json}"
+resource "aws_iam_policy" "codepipeline_ec2" {
+  name   = "${var.project_name}-codepipeline-ec2"
+  policy = "${data.aws_iam_policy_document.ec2.json}"
 }
 
-data "aws_iam_policy_document" "codepipeline" {
+data "aws_iam_policy_document" "ec2" {
   statement {
     actions = [
-      "elasticbeanstalk:*",
-      "ec2:*",
-      "elasticloadbalancing:*",
-      "autoscaling:*",
-      "cloudwatch:*",
-      "s3:*",
-      "sns:*",
-      "cloudformation:*",
-      "rds:*",
-      "sqs:*",
-      "ecs:*",
-      "iam:PassRole",
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeDhcpOptions",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeVpcs"
     ]
 
     resources = ["*"]
@@ -51,59 +46,14 @@ data "aws_iam_policy_document" "codepipeline" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "s3" {
+resource "aws_iam_role_policy_attachment" "s3_pipeline" {
   role       = "${aws_iam_role.codepipeline.id}"
   policy_arn = "${aws_iam_policy.s3.arn}"
-}
-
-resource "aws_iam_policy" "s3" {
-  name   = "${var.project_name}-codepipeline-s3"
-  policy = "${data.aws_iam_policy_document.s3.json}"
-}
-
-# todo tighten this up
-data "aws_iam_policy_document" "s3" {
-  statement {
-    actions = [
-      "s3:GetObject",
-      "s3:GetObjectVersion",
-      "s3:GetBucketVersioning",
-      "s3:PutObject",
-    ]
-
-    resources = [
-      "${aws_s3_bucket.build_artifacts.arn}",
-      "${aws_s3_bucket.build_artifacts.arn}/*",
-    ]
-
-    effect = "Allow"
-  }
 }
 
 resource "aws_iam_role_policy_attachment" "kms_codepipeline" {
   role       = "${aws_iam_role.codepipeline.id}"
   policy_arn = "${aws_iam_policy.kms.arn}"
-}
-
-resource "aws_iam_policy" "kms" {
-  name   = "${var.project_name}-kms-policy"
-  policy = "${data.aws_iam_policy_document.kms.json}"
-}
-
-data "aws_iam_policy_document" "kms" {
-  statement {
-    actions = [
-      "kms:DescribeKey",
-      "kms:GenerateDataKey*",
-      "kms:Encrypt",
-      "kms:ReEncrypt*",
-      "kms:Decrypt"
-    ]
-
-    resources = ["${aws_kms_key.code_pipeline.arn}"]
-
-    effect = "Allow"
-  }
 }
 
 resource "aws_iam_role_policy_attachment" "codepipeline_build" {
@@ -119,7 +69,8 @@ resource "aws_iam_policy" "codepipeline_build" {
 data "aws_iam_policy_document" "codepipeline_build" {
   statement {
     actions = [
-      "codebuild:*",
+      "codebuild:BatchGetBuilds",
+      "codebuild:StartBuild",
     ]
 
     resources = ["${aws_codebuild_project.default.id}"]
@@ -195,7 +146,7 @@ resource "aws_codepipeline" "default" {
       version = "1"
 
       input_artifacts = ["source"]
-      output_artifacts = ["package"]
+      output_artifacts = ["artifact"]
 
       configuration {
         ProjectName = "${var.project_name}"

@@ -1,6 +1,9 @@
 # Code Pipeline infrastructure
 
 Contains terraform templates that provision the AWS infrastructure for a CI/CD pipeline.
+The resulting pipeline has a stage for source and one for build.
+
+More information about terraform can be found here [http://www.terraform.io]
 
 ## Resources Created
 * CodeCommit repository
@@ -8,6 +11,7 @@ Contains terraform templates that provision the AWS infrastructure for a CI/CD p
 * CodePipeline project
 * S3 bucket for storing build artifacts
 * IAM Roles for service interaction
+* KMS Key for encryption at rest
 
 ## Usage
 When running the following commands replace <my-project-name> with the actual name of your project.

@@ -1,9 +1,9 @@
-resource "aws_iam_role" "codebuild_service_role" {
-  name = "${var.project_name}-codebuild-role"
-  assume_role_policy = "${data.aws_iam_policy_document.assume_role.json}"
+resource "aws_iam_role" "codebuild" {
+  name = "${var.project_name}-codebuild"
+  assume_role_policy = "${data.aws_iam_policy_document.build_assume_role.json}"
 }
 
-data "aws_iam_policy_document" "assume_role" {
+data "aws_iam_policy_document" "build_assume_role" {
   statement {
     actions = [
       "sts:AssumeRole",
@@ -20,16 +20,16 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_policy" "codebuild_policy" {
-  name = "${var.project_name}-codebuild-policy"
-  policy = "${data.aws_iam_policy_document.codebuild_policy_document.json}"
+  name = "${var.project_name}-codebuild"
+  policy = "${data.aws_iam_policy_document.codebuild.json}"
 }
 
 locals {
   region_account = "${data.aws_region.default.name}:${data.aws_caller_identity.default.account_id}"
-  log_group_prefix = "arn:aws:logs:${local.region_account}:log-group:/aws/codebuild/${var.project_name}"
+  log_group_prefix = "arn:aws:logs:${local.region_account}:log-group:/aws/codebuild/${var.project_name}:log-stream"
 }
 
-data "aws_iam_policy_document" "codebuild_policy_document" {
+data "aws_iam_policy_document" "codebuild" {
   statement {
     actions = [
       "logs:CreateLogGroup",
@@ -70,11 +70,16 @@ data "aws_iam_policy_document" "codebuild_policy_document" {
   }
 }
 
+resource "aws_iam_role_policy_attachment" "kms_codebuild" {
+  role       = "${aws_iam_role.codebuild.id}"
+  policy_arn = "${aws_iam_policy.kms.arn}"
+}
+
 resource "aws_codebuild_project" "default" {
   name = "${var.project_name}"
   description = "${var.project_description}"
 
-  service_role = "${aws_iam_role.codebuild_service_role.arn}"
+  service_role = "${aws_iam_role.codebuild.arn}"
 //  badge_enabled = true
 
   environment {
@@ -86,13 +91,15 @@ resource "aws_codebuild_project" "default" {
 
   source {
     buildspec = "${var.build_spec}"
-    type      = "${var.source_type}"
-    location  = "${var.source_location}"
+    type      = "${var.build_source_type}"
+    location  = "${var.build_source_location}"
   }
 
   artifacts {
     type = "CODEPIPELINE"
   }
+
+  encryption_key = "${aws_kms_alias.code_pipeline.arn}"
 
   tags {
     Name = "${var.project_name}-code-build"

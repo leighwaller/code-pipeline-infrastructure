@@ -11,7 +11,7 @@ output "codebuild_project_arn" {
 
 output "codebuild_role_arn" {
   description = "Amazon Resource Name for the IAM service role given to CodeBuild"
-  value = "${aws_iam_role.codebuild_service_role.arn}"
+  value = "${aws_iam_role.codebuild.arn}"
 }
 
 output "build_artifact_bucket_name" {
@@ -44,4 +44,26 @@ output "code_repository_clone_http_url" {
 output "code_repository_ssh" {
   description = "The URL to use for cloning the repository over SSH"
   value = "${aws_codecommit_repository.default.clone_url_ssh}"
+}
+
+# CodePipeline
+output "pipeline_id" {
+  description = "ID of the code pipeline"
+  value = "${aws_codepipeline.default.id}"
+}
+
+output "pipeline_arn" {
+  description = "Amazon Resource Name of the code pipeline"
+  value = "${aws_codepipeline.default.arn}"
+}
+
+output "pipeline_role_arn" {
+  description = "Amazon Resource Name for the IAM role given to CodePipeline"
+  value = "${aws_iam_role.codepipeline.arn}"
+}
+
+# KMS
+output "kms_key_id" {
+  description = "The ID of the KMS key created for encrypting pipeline artifacts"
+  value = "${aws_kms_key.code_pipeline.key_id}"
 }

@@ -156,5 +156,3 @@ resource "aws_codepipeline" "default" {
   }
 
 }
-
-# todo add CloudWatch event to auto start pipeline on code commits

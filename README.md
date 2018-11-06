@@ -11,7 +11,8 @@ More information about terraform can be found here [http://www.terraform.io]
 * CodePipeline project
 * S3 bucket for storing build artifacts
 * IAM Roles for service interaction
-* KMS Key for encryption at rest
+* KMS Key for encrypting build artifacts at rest
+* CloudWatch event rule to automatically trigger the pipeline when a commit is made to the repository
 
 ## Usage
 When running the following commands replace <my-project-name> with the actual name of your project.

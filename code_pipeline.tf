@@ -73,7 +73,11 @@ data "aws_iam_policy_document" "codepipeline_build" {
       "codebuild:StartBuild",
     ]
 
-    resources = ["${aws_codebuild_project.default.id}"]
+    resources = [
+      "${aws_codebuild_project.default.id}",
+      "${aws_codebuild_project.deployer.id}"
+    ]
+
     effect    = "Allow"
   }
 }
@@ -152,7 +156,25 @@ resource "aws_codepipeline" "default" {
         ProjectName = "${var.project_name}"
       }
     }
+  }
 
+  stage {
+    name = "Deploy"
+
+    action {
+      category = "Build"
+      name = "Deploy"
+      owner = "AWS"
+      provider = "CodeBuild"
+      version = "1"
+
+      input_artifacts = ["source"]
+      # todo how to get the zip
+
+      configuration {
+        ProjectName = "${var.project_name}-deployer"
+      }
+    }
   }
 
 }

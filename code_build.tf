@@ -42,6 +42,15 @@ data "aws_iam_policy_document" "logstream" {
   }
 }
 
+data "aws_iam_policy" "ecr_full" {
+  arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+}
+
+resource "aws_iam_role_policy_attachment" "codebuild_ecr" {
+  role       = "${aws_iam_role.codebuild.id}"
+  policy_arn = "${data.aws_iam_policy.ecr_full.arn}"
+}
+
 resource "aws_iam_role_policy_attachment" "s3_build" {
   role       = "${aws_iam_role.codebuild.id}"
   policy_arn = "${aws_iam_policy.s3.arn}"
@@ -67,13 +76,15 @@ resource "aws_codebuild_project" "default" {
   }
 
   source {
-    buildspec = "${var.build_spec}"
-    type      = "${var.build_source_type}"
+    type      = "CODEPIPELINE"
     location  = "${var.build_source_location}"
+    buildspec = "${var.build_spec}"
   }
 
   artifacts {
     type = "CODEPIPELINE"
+    location = "${aws_s3_bucket.build_artifacts.id}"
+    path = "${var.project_name}"
   }
 
   encryption_key = "${aws_kms_alias.code_pipeline.arn}"

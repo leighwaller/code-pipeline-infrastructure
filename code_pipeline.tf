@@ -74,8 +74,7 @@ data "aws_iam_policy_document" "codepipeline_build" {
     ]
 
     resources = [
-      "${aws_codebuild_project.default.id}",
-      "${aws_codebuild_project.deployer.id}"
+      "${aws_codebuild_project.default.id}"
     ]
 
     effect    = "Allow"
@@ -162,17 +161,18 @@ resource "aws_codepipeline" "default" {
     name = "Deploy"
 
     action {
-      category = "Build"
+      category = "Deploy"
       name = "Deploy"
       owner = "AWS"
-      provider = "CodeBuild"
+      provider = "ECS"
       version = "1"
 
-      input_artifacts = ["source"]
-      # todo how to get the zip
+      input_artifacts = ["artifact"]
 
       configuration {
-        ProjectName = "${var.project_name}-deployer"
+        ClusterName = "${var.deploy_target_cluster}"
+        ServiceName = "${var.project_name}"
+        FileName = "image_definitions.json"
       }
     }
   }

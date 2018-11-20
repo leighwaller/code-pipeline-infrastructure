@@ -14,17 +14,12 @@ variable "build_compute_type" {
 
 variable "build_image" {
   description = "Docker image id used for the build environment"
-  default = "aws/codebuild/python:3.6.5"
+  default = "aws/codebuild/docker:17.09.0"
 }
 
 variable "build_spec" {
   description = "Override the buildspec file to be used in CodeBuild. Defaults to buildspec.yml in the project root directory."
   default = ""
-}
-
-variable "build_source_type" {
-  description = "Type of repository that contains the source code to be built. Valid values for this parameter are: CODECOMMIT, CODEPIPELINE, GITHUB, GITHUB_ENTERPRISE, BITBUCKET or S3."
-  default = "CODEPIPELINE"
 }
 
 variable "build_source_location" {
@@ -35,4 +30,9 @@ variable "build_source_location" {
 variable "build_default_branch" {
   description = "Default git branch used by CodeCommit"
   default = "develop"
+}
+
+variable "deploy_target_cluster" {
+  description = "The ECS cluster to deploy services to"
+  default = "main"
 }

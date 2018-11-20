@@ -19,12 +19,12 @@ data "aws_iam_policy_document" "pipeline_assume_role" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "default" {
+resource "aws_iam_role_policy_attachment" "pipeline_ec2" {
   role       = "${aws_iam_role.codepipeline.id}"
-  policy_arn = "${aws_iam_policy.codepipeline_ec2.arn}"
+  policy_arn = "${aws_iam_policy.pipeline_ec2.arn}"
 }
 
-resource "aws_iam_policy" "codepipeline_ec2" {
+resource "aws_iam_policy" "pipeline_ec2" {
   name   = "${var.project_name}-codepipeline-ec2"
   policy = "${data.aws_iam_policy_document.ec2.json}"
 }
@@ -40,33 +40,77 @@ data "aws_iam_policy_document" "ec2" {
       "ec2:DescribeSecurityGroups",
       "ec2:DescribeVpcs"
     ]
-
     resources = ["*"]
     effect    = "Allow"
   }
 }
 
-resource "aws_iam_role_policy_attachment" "s3_pipeline" {
+resource "aws_iam_role_policy_attachment" "pipeline_ecs" {
+  role       = "${aws_iam_role.codepipeline.id}"
+  policy_arn = "${aws_iam_policy.pipeline_ecs.arn}"
+}
+
+resource "aws_iam_policy" "pipeline_ecs" {
+  name   = "${var.project_name}-codepipeline-ecs"
+  policy = "${data.aws_iam_policy_document.ecs.json}"
+}
+
+data "aws_iam_policy_document" "ecs" {
+  statement {
+    actions = [
+      "ecs:DescribeServices",
+      "ecs:DescribeTaskDefinition",
+      "ecs:DescribeTasks",
+      "ecs:ListTasks",
+      "ecs:RegisterTaskDefinition",
+      "ecs:UpdateService"
+    ]
+    resources = ["*"]
+    effect = "Allow"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "pipeline_iam" {
+  role       = "${aws_iam_role.codepipeline.id}"
+  policy_arn = "${aws_iam_policy.pipeline_iam.arn}"
+}
+
+resource "aws_iam_policy" "pipeline_iam" {
+  name   = "${var.project_name}-codepipeline-iam"
+  policy = "${data.aws_iam_policy_document.iam.json}"
+}
+
+data "aws_iam_policy_document" "iam" {
+  statement {
+    actions = [
+      "iam:PassRole"
+    ]
+    resources = ["*"]
+    effect = "Allow"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "pipeline_s3" {
   role       = "${aws_iam_role.codepipeline.id}"
   policy_arn = "${aws_iam_policy.s3.arn}"
 }
 
-resource "aws_iam_role_policy_attachment" "kms_codepipeline" {
+resource "aws_iam_role_policy_attachment" "pipeline_kms" {
   role       = "${aws_iam_role.codepipeline.id}"
   policy_arn = "${aws_iam_policy.kms.arn}"
 }
 
-resource "aws_iam_role_policy_attachment" "codepipeline_build" {
+resource "aws_iam_role_policy_attachment" "pipeline_build" {
   role       = "${aws_iam_role.codepipeline.id}"
-  policy_arn = "${aws_iam_policy.codepipeline_build.arn}"
+  policy_arn = "${aws_iam_policy.pipeline_build.arn}"
 }
 
-resource "aws_iam_policy" "codepipeline_build" {
+resource "aws_iam_policy" "pipeline_build" {
   name   = "${var.project_name}-codepipeline-build"
-  policy = "${data.aws_iam_policy_document.codepipeline_build.json}"
+  policy = "${data.aws_iam_policy_document.codebuild.json}"
 }
 
-data "aws_iam_policy_document" "codepipeline_build" {
+data "aws_iam_policy_document" "codebuild" {
   statement {
     actions = [
       "codebuild:BatchGetBuilds",
@@ -81,12 +125,12 @@ data "aws_iam_policy_document" "codepipeline_build" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "codepipeline_source" {
+resource "aws_iam_role_policy_attachment" "pipeline_source" {
   role = "${aws_iam_role.codepipeline.id}"
-  policy_arn = "${aws_iam_policy.codepipeline_source.arn}"
+  policy_arn = "${aws_iam_policy.pipeline_source.arn}"
 }
 
-resource "aws_iam_policy" "codepipeline_source" {
+resource "aws_iam_policy" "pipeline_source" {
   name = "${var.project_name}-codepipeline-source"
   policy = "${data.aws_iam_policy_document.codepipeline_source.json}"
 }
